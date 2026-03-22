@@ -1,0 +1,31 @@
+name: Security Audit
+
+on:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install and configure JFrog CLI (required)
+      - uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+
+      # Run the security audit
+      - uses: attiasas/audit-gate@main
+        with:
+          licenses: 'true' # Set to 'true' to include license issues in the audit
+          static-sca: ${{ vars.AUDIT_STATIC_SCA }} # Set to 'true' to include static SCA issues in the audit
+          fail: ${{ vars.AUDIT_FAIL }} # Set to 'true' to fail the workflow on any issue detected
+          watches: ${{ vars.AUDIT_WATCHES || '' }} # Comma-separated list of JFrog Artifactory watches to include in the audit
+          fail-on-pr-policy: ${{ vars.AUDIT_FAIL_ON_PR_POLICY }} # Set to 'true' to fail on PR policy violations
+          fail-on-build-policy: ${{ vars.AUDIT_FAIL_ON_BUILD_POLICY }} # Set to 'true' to fail on build policy violations
+          
